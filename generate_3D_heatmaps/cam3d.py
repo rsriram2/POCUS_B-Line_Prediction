@@ -126,13 +126,23 @@ val_mat_file_paths = glob.glob('/dcs05/ciprian/smart/pocus/rushil/masked_stacked
 val_dataset = VolumeDataset(val_mat_file_paths, transform)
 val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False)
 
-model = UNet3D_Born_etal(pretrained=True, input_channels=3, N_classes=2)
-target_layer = model.UNetEncoder3D.DownTransition[2]
+# Load the model
+model = UNet3D_Born_etal(pretrained=False, input_channels=3, N_classes=2)
+
+# Load custom weights with mapping to CPU
+model_weights_path = '/dcs05/ciprian/smart/pocus/rushil/all_model_paths/masked_model_paths/unet.pth'
+model.load_state_dict(torch.load(model_weights_path, map_location=torch.device('cpu')))
+target_layer = model.encoder.down_tr256
 
 grad_cam = GradCAM3D(model, target_layer)
 
+output_dir = 'gradcam_outputs'
+os.makedirs(output_dir, exist_ok=True)
+
 for i, (input_volume, label) in enumerate(val_dataloader):
+     # Permute the dimensions of input_volume before passing to Grad-CAM
      input_volume = input_volume.to(device)  # Send to GPU if available
+     input_volume = input_volume.permute(0, 2, 1, 3, 4)  # Ensure correct dimensions
      label = label.to(device)
      
      heatmap = grad_cam.generate_cam(input_volume, target_class=label.item())
