@@ -46,22 +46,3 @@ def segmentation_algorithm2(x):
     new_mask = clear_border(new_mask)
     
     return new_mask
-
-
-# Test the function with a sample input
-x = '/Users/rushil/Downloads/IM000016_090.png'
-
-image = io.imread(x)
-new_mask = segmentation_algorithm2(image)
-
-# Display the original image and the new mask
-fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-axes[0].imshow(image, cmap='gray')
-axes[0].set_title('Original Image')
-axes[0].axis('off')
-
-axes[1].imshow(new_mask, cmap='gray')
-axes[1].set_title('New Mask')
-axes[1].axis('off')
-
-plt.show()
