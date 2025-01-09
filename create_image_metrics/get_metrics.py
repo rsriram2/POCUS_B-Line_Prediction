@@ -5,6 +5,7 @@ import pandas as pd
 import glob
 import seaborn as sns
 import matplotlib.pyplot as plt
+import torch
 
 def is_image_file(filename):
     return filename.lower().endswith('.png')
