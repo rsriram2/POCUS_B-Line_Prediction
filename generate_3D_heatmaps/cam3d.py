@@ -1,14 +1,20 @@
+import sys
+import os
+
+# Add the path to the train_3D_models directory to the system path
+sys.path.append('/dcs05/ciprian/smart/pocus/rushil/POCUS_B-Line_Prediction/train_3D_models')
+
+# Now you can import the module
+from architectures_by_others import UNet3D_Born_etal
+
 import torch
 import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, Dataset
-import os
 import scipy.io
 import glob
 from torchvision import transforms
-from architectures_by_others import UNet3D_Born_etal
-
 
 class GradCAM3D:
     def __init__(self, model, target_layer):
@@ -97,10 +103,13 @@ class VolumeDataset(Dataset):
 
         # Assign labels based on folder name
         self.labels = []
+        self.file_names = []  # Store the file names
+
         for path in mat_file_paths:
             folder_name = os.path.basename(os.path.dirname(path))
             label = 1 if folder_name == 'b-line' else 0
             self.labels.append(label)
+            self.file_names.append(os.path.basename(path))  # Store the file name
 
     def __len__(self):
         return len(self.mat_file_paths)
@@ -114,7 +123,8 @@ class VolumeDataset(Dataset):
             volume = torch.stack([self.transform(volume[i]) for i in range(volume.shape[0])])
 
         label = self.labels[idx]
-        return volume, label
+        file_name = self.file_names[idx]  # Extract the file name as a string
+        return volume, label, file_name  # Return the file name
 
 # Transformation to convert each slice to a tensor
 transform = transforms.Compose([
@@ -122,7 +132,7 @@ transform = transforms.Compose([
 ])
 
 # Load validation data
-val_mat_file_paths = glob.glob('/dcs05/ciprian/smart/pocus/rushil/masked_stackedData/validation/*/*.mat')
+val_mat_file_paths = glob.glob('/dcs05/ciprian/smart/pocus/rushil/3D_data/masked/validation/*/*.mat')
 val_dataset = VolumeDataset(val_mat_file_paths, transform)
 val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False)
 
@@ -136,15 +146,21 @@ target_layer = model.encoder.down_tr256
 
 grad_cam = GradCAM3D(model, target_layer)
 
+# Define device (GPU if available, else CPU)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model.to(device)  # Move the model to the device
+
 output_dir = 'gradcam_outputs'
 os.makedirs(output_dir, exist_ok=True)
 
-for i, (input_volume, label) in enumerate(val_dataloader):
+for i, (input_volume, label, file_name_tuple) in enumerate(val_dataloader):
+     file_name = file_name_tuple[0]
+     # Print the file_name to debug
+     print(f"File Name: {file_name}, Type: {type(file_name)}")
      # Permute the dimensions of input_volume before passing to Grad-CAM
      input_volume = input_volume.to(device)  # Send to GPU if available
      input_volume = input_volume.permute(0, 2, 1, 3, 4)  # Ensure correct dimensions
      label = label.to(device)
-     
      heatmap = grad_cam.generate_cam(input_volume, target_class=label.item())
-     save_path = f"gradcam_outputs/volume_{i}_class_{label.item()}.png"
+     save_path = os.path.join(output_dir, file_name.replace('.mat', '_heatmap.png'))  # Use the same file name
      grad_cam.save_cam(heatmap, save_path)
