@@ -24,3 +24,15 @@ perform_ttest(bounding_box_metrics, 'variance')
 print("Rectilinear Images Metrics:")
 perform_ttest(rectilinear_metrics, 'mean')
 perform_ttest(rectilinear_metrics, 'variance')
+
+# Check unique values in 'Label' column for each DataFrame
+print("Masked Images Metrics Labels:")
+print(masked_metrics['Label'].unique())
+
+print("Bounding Box Images Metrics Labels:")
+print(bounding_box_metrics['Label'].unique())
+
+print("Rectilinear Images Metrics Labels:")
+print(rectilinear_metrics['Label'].unique())
+
+
