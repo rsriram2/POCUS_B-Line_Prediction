@@ -2,7 +2,6 @@ import pandas as pd
 import os
 
 def extract_details_from_filename(filepath):
-    # Example: /dcs05/ciprian/smart/pocus/rushil/2D_data/masked/test/b-line/PC02-S002-00000092_IM000007_089.png
     filename = os.path.basename(filepath)
     name, ext = os.path.splitext(filename)
     pid, clip, slice_ = name.split('_')[0], name.split('_')[1], name.split('_')[2]
