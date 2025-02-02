@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 from torchvision.datasets import ImageFolder
 from torch.utils.data import ConcatDataset
 from torch.utils.data import DataLoader
